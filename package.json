@@ -11,7 +11,11 @@
   "overrides": {
     "next-themes": {
       "next": "$next"
-    }
+    },
+    "react": "19.0.0-rc-1631855f-20241023",
+    "react-dom": "19.0.0-rc-1631855f-20241023",
+    "@types/react": "npm:types-react@19.0.0-rc.1",
+    "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1"
   },
   "dependencies": {
     "next": "15.0.1",
