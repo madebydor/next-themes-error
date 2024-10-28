@@ -13,9 +13,7 @@
       "next": "$next"
     },
     "react": "19.0.0-rc-69d4b800-20241021",
-    "react-dom": "19.0.0-rc-69d4b800-20241021",
-    "@types/react": "npm:types-react@19.0.0-rc.1",
-    "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1"
+    "react-dom": "19.0.0-rc-69d4b800-20241021"
   },
   "dependencies": {
     "next": "15.0.1",
