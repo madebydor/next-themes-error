@@ -1,0 +1,275 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id             String    @id @default(uuid())
+    name           String
+    username       String    @unique
+    hashedPassword String?
+    googleId       String?   @unique
+    email          String?   @unique
+    createdAt      DateTime  @default(now())
+    updatedAt      DateTime? @updatedAt
+    image          String?
+    sessions       Session[]
+    projects       Project[]
+    tasks          Task[]
+    notes          Note[]
+    companyId      String?
+
+    company    Company?    @relation(references: [id], fields: [companyId], onDelete: SetNull)
+    saleOrders SaleOrder[]
+    products   Product[]
+
+    @@index([username])
+}
+
+model Session {
+    id        String   @id
+    userId    String
+    expiresAt DateTime
+
+    user User @relation(references: [id], fields: [userId], onDelete: Cascade)
+}
+
+model Company {
+    id                   String    @id @default(uuid())
+    name                 String
+    onboarding_employees String?
+    image                String?
+    category             String?
+    address              String?
+    join_token           String?   @default(uuid()) @db.Uuid()
+    website              String?
+    createdAt            DateTime  @default(now())
+    updatedAt            DateTime? @updatedAt
+
+    users             User[]
+    clients           Client[]
+    stages            Stage[]
+    tasks             Task[]
+    projects          Project[]
+    stagesToProject   StageToProject[]
+    notes             Note[]
+    saleOrders        SaleOrder[]
+    products          Product[]
+    saleOrderLineItem SaleOrderLineItem[]
+    statuses          OrderStatus[]
+    books             Book[]
+    boilerplates      Boilerplate[]
+}
+
+model Client {
+    id        String    @id @default(uuid())
+    name      String
+    phone     String?
+    notes     String?
+    email     String?
+    companyId String?
+    createdAt DateTime  @default(now())
+    updatedAt DateTime? @updatedAt
+
+    projects Project[]
+
+    company    Company?    @relation(references: [id], fields: [companyId], onDelete: Cascade)
+    saleOrders SaleOrder[]
+
+    @@index([name])
+}
+
+model Stage {
+    id               String           @id @default(uuid())
+    name             String
+    key              String
+    companyId        String?
+    projects         Project[]
+    stagesToProjects StageToProject[]
+    tasks            Task[]
+
+    company Company? @relation(references: [id], fields: [companyId], onDelete: Cascade)
+}
+
+model Task {
+    id          String     @id @default(uuid())
+    description String
+    assigneeId  String?
+    stageId     String?
+    companyId   String?
+    status      TaskStatus @default(OPEN)
+    projectId   String?
+    createdAt   DateTime   @default(now())
+    updatedAt   DateTime?  @updatedAt
+
+    stage          Stage?          @relation(references: [id], fields: [stageId], onDelete: Cascade)
+    user           User?           @relation(references: [id], fields: [assigneeId], onDelete: Cascade)
+    project        Project?        @relation(references: [id], fields: [projectId], onDelete: Cascade)
+    stageToProject StageToProject? @relation(references: [stageId, projectId], fields: [stageId, projectId], onDelete: Cascade)
+    company        Company?        @relation(references: [id], fields: [companyId], onDelete: Cascade)
+}
+
+model Note {
+    id        String    @id @default(uuid())
+    text      String
+    userId    String?
+    projectId String?
+    companyId String?
+    createdAt DateTime  @default(now())
+    updatedAt DateTime? @updatedAt
+
+    user    User?    @relation(references: [id], fields: [userId], onDelete: Cascade)
+    project Project? @relation(references: [id], fields: [projectId], onDelete: Cascade)
+    company Company? @relation(references: [id], fields: [companyId], onDelete: Cascade)
+}
+
+model Project {
+    id             String  @id @default(uuid())
+    clientId       String
+    currentStageId String?
+    status         String?
+    category       String?
+    address        String?
+    year           String?
+    assigneeId     String?
+    companyId      String?
+
+    tasks            Task[]
+    stagesToProjects StageToProject[]
+
+    createdAt DateTime  @default(now())
+    updatedAt DateTime? @updatedAt
+
+    stage    Stage?   @relation(references: [id], fields: [currentStageId], onDelete: Cascade)
+    client   Client   @relation(references: [id], fields: [clientId], onDelete: Cascade)
+    assignee User?    @relation(references: [id], fields: [assigneeId], onDelete: Cascade)
+    company  Company? @relation(references: [id], fields: [companyId], onDelete: Cascade)
+    notes    Note[]
+}
+
+model StageToProject {
+    stageId   String
+    projectId String
+    position  Int     @default(0)
+    companyId String?
+
+    company Company? @relation(references: [id], fields: [companyId], onDelete: Cascade)
+    stage   Stage    @relation(references: [id], fields: [stageId], onDelete: Cascade)
+    project Project  @relation(references: [id], fields: [projectId], onDelete: Cascade)
+
+    tasks Task[]
+
+    @@id([stageId, projectId])
+}
+
+// Example model schema 
+
+// model Post {
+//     String        Int      @id
+//     name      String
+//     createdAt DateTime @default(now())
+//     updatedAt DateTime @updatedAt
+
+//     @@index([name])
+// }
+
+model Product {
+    id        String    @id @default(uuid())
+    sku       String
+    name      String
+    companyId String?
+    price     Float?
+    inStock   Float?
+    notes     String?
+    creatorId String?
+    image     String?
+    createdAt DateTime  @default(now())
+    updatedAt DateTime? @updatedAt
+
+    creator           User?               @relation(references: [id], fields: [creatorId], onDelete: SetNull)
+    company           Company?            @relation(references: [id], fields: [companyId], onDelete: Cascade)
+    saleOrderLineItem SaleOrderLineItem[]
+}
+
+model SaleOrder {
+    id           String    @id @default(uuid())
+    statusId     String?
+    creatorId    String?
+    companyId    String?
+    clientId     String
+    total        Float?
+    notes        String?
+    client       Client?   @relation(references: [id], fields: [clientId], onDelete: Cascade)
+    orderAt      DateTime  @default(now())
+    createdAt    DateTime  @default(now())
+    updatedAt    DateTime? @updatedAt
+    customFields Json?
+
+    status    OrderStatus?        @relation(references: [id], fields: [statusId], onDelete: SetNull)
+    lineItems SaleOrderLineItem[]
+    creator   User?               @relation(references: [id], fields: [creatorId], onDelete: SetNull)
+    company   Company?            @relation(references: [id], fields: [companyId], onDelete: Cascade)
+}
+
+model SaleOrderLineItem {
+    id          String    @id @default(uuid())
+    saleOrderId String
+    productId   String?
+    companyId   String?
+    qty         Float?
+    total       Float?
+    saleOrder   SaleOrder @relation(fields: [saleOrderId], references: [id], onDelete: Cascade)
+    product     Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+    company     Company?  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+    // @@id([saleOrderId, productId])
+}
+
+model OrderStatus {
+    id        String  @id @default(uuid())
+    label     String
+    companyId String
+    company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime    @default(now())
+    updatedAt DateTime?   @updatedAt
+    SaleOrder SaleOrder[]
+}
+
+enum TaskStatus {
+    OPEN
+    INPROGRESS
+    DONE
+    ARCHIVED
+}
+
+// Data model
+model Book {
+    id        String  @id @default(uuid())
+    author    String
+    companyId String?
+    title     String
+
+    company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+// Data model
+model Boilerplate {
+    id        String  @id @default(uuid())
+    author    String
+    companyId String?
+    title     String
+
+    company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
